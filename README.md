@@ -2,6 +2,12 @@
 
 A modern Next.js chat application that provides a ChatGPT-like interface for interacting with AI agents. Features real-time streaming responses, authentication, and markdown rendering.
 
+## Live Demo
+
+🌐 **Live Application**: [https://aiagent.kingsley-api.name.ng/](https://aiagent.kingsley-api.name.ng/)
+
+Try out the application with a live demo at the link above.
+
 ## Features
 
 - **Real-time Chat Interface**: ChatGPT-style chatbox with streaming responses
