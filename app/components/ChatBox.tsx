@@ -10,6 +10,7 @@ export default function ChatBox() {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [streamedResponse, setStreamedResponse] = useState("");
+  const [userMessage, setUserMessage] = useState("");
   const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
@@ -23,7 +24,8 @@ export default function ChatBox() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim() && !isLoading) {
+    const currentMessage = message.trim();
+    if (currentMessage && !isLoading) {
       // Close any existing connection
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
@@ -31,14 +33,15 @@ export default function ChatBox() {
 
       setIsLoading(true);
       setStreamedResponse("");
+      setUserMessage(currentMessage);
+      setMessage("");
 
-      const eventSource = sendMessage(message, (chunk) => {
+      const eventSource = sendMessage(currentMessage, (chunk) => {
         if (chunk?.event === "message" && chunk?.data) {
           setStreamedResponse((prev) => prev + chunk.data);
         }
         if (chunk?.event === "done") {
           setIsLoading(false);
-          setMessage("");
           eventSourceRef.current = null;
         }
         if (chunk?.error) {
@@ -54,14 +57,21 @@ export default function ChatBox() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col items-center pb-4">
-      {streamedResponse && (
-        <div className="w-full max-w-3xl px-4 mb-2">
-          <div className="rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 py-2 text-sm text-zinc-900 dark:text-zinc-100">
-            <MarkdownRenderer content={streamedResponse} />
-            {isLoading && (
-              <span className="inline-block w-2 h-4 ml-1 bg-zinc-900 dark:bg-zinc-100 animate-pulse" />
-            )}
-          </div>
+      {(userMessage || streamedResponse) && (
+        <div className="w-full max-w-3xl px-4 mb-2 space-y-2">
+          {userMessage && (
+            <div className="rounded-lg bg-zinc-200 dark:bg-zinc-700 px-4 py-2 text-sm text-zinc-900 dark:text-zinc-100">
+              {userMessage}
+            </div>
+          )}
+          {streamedResponse && (
+            <div className="rounded-lg bg-zinc-100 dark:bg-zinc-800 px-4 py-2 text-sm text-zinc-900 dark:text-zinc-100">
+              <MarkdownRenderer content={streamedResponse} />
+              {isLoading && (
+                <span className="inline-block w-2 h-4 ml-1 bg-zinc-900 dark:bg-zinc-100 animate-pulse" />
+              )}
+            </div>
+          )}
         </div>
       )}
       <div className="w-full max-w-3xl px-4">
