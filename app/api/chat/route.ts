@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthHeaders } from "../../lib/auth";
+import { getAuthHeaders, clearAuthCookies } from "../../lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,6 +40,31 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
+      // If we get a 401, clear auth cookies and send error event through stream
+      if (response.status === 401) {
+        await clearAuthCookies();
+        // Create a stream that sends an error event
+        const stream = new ReadableStream({
+          start(controller) {
+            const encoder = new TextEncoder();
+            const errorData = JSON.stringify({
+              error: "Unauthorized - Please log in again",
+              status: 401,
+            });
+            controller.enqueue(
+              encoder.encode(`event: error\ndata: ${errorData}\n\n`)
+            );
+            controller.close();
+          },
+        });
+        return new Response(stream, {
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+          },
+        });
+      }
       return NextResponse.json(
         {
           error: `API responded with status ${response.status}`,

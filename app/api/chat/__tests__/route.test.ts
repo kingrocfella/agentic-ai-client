@@ -198,11 +198,11 @@ describe("GET /api/chat", () => {
     const mockFetch = global.fetch as jest.Mock;
     mockFetch.mockResolvedValue({
       ok: false,
-      status: 401,
+      status: 500,
     });
 
     mockGetAuthHeaders.mockResolvedValue({
-      Authorization: "Bearer invalid-token",
+      Authorization: "Bearer test-token",
     });
 
     const request = {
@@ -216,8 +216,41 @@ describe("GET /api/chat", () => {
     const response = await GET(request);
     const data = await response.json();
 
-    expect(data.error).toBe("API responded with status 401");
-    expect(response.status).toBe(401);
+    expect(data.error).toBe("API responded with status 500");
+    expect(response.status).toBe(500);
+  });
+
+  it("should clear cookies and return streaming error for 401", async () => {
+    const mockFetch = global.fetch as jest.Mock;
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 401,
+    });
+
+    mockGetAuthHeaders.mockResolvedValue({
+      Authorization: "Bearer invalid-token",
+    });
+
+    const { clearAuthCookies } = await import("../../../lib/auth");
+    const clearCookiesSpy = jest.spyOn(
+      await import("../../../lib/auth"),
+      "clearAuthCookies"
+    );
+
+    const request = {
+      nextUrl: {
+        searchParams: {
+          get: jest.fn().mockReturnValue("test"),
+        },
+      },
+    } as unknown as NextRequest;
+
+    const response = await GET(request);
+
+    // For 401, we return a streaming response with error event
+    expect(response).toBeInstanceOf(Response);
+    expect(response.headers.get("Content-Type")).toBe("text/event-stream");
+    expect(clearCookiesSpy).toHaveBeenCalled();
   });
 
   it("should return error when response body is missing", async () => {

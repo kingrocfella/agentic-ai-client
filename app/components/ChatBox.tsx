@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { sendMessage } from "../lib/api";
 import MarkdownRenderer from "./MarkdownRenderer";
 import SendIcon from "./SendIcon";
 import LoadingSpinner from "./LoadingSpinner";
 
 export default function ChatBox() {
+  const router = useRouter();
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [streamedResponse, setStreamedResponse] = useState("");
@@ -48,6 +50,14 @@ export default function ChatBox() {
           console.error("Error:", chunk.error);
           setIsLoading(false);
           eventSourceRef.current = null;
+
+          // If we get a 401 error, redirect to login
+          if (
+            chunk.error.includes("401") ||
+            chunk.error.includes("Unauthorized")
+          ) {
+            router.push("/login");
+          }
         }
       });
 

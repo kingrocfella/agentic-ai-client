@@ -29,3 +29,9 @@ export async function isAuthenticated(): Promise<boolean> {
   const token = await getAccessToken();
   return !!token;
 }
+
+export async function clearAuthCookies(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete("access_token");
+  cookieStore.delete("token_type");
+}

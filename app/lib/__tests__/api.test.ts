@@ -8,6 +8,9 @@ const mockEventSource = {
   onmessage: null as ((event: MessageEvent) => void) | null,
   onerror: null as ((event: Event) => void) | null,
   readyState: 1,
+  CONNECTING: 0,
+  OPEN: 1,
+  CLOSED: 2,
 };
 
 describe("sendMessage", () => {
@@ -40,11 +43,14 @@ describe("sendMessage", () => {
     );
   });
 
-  it("should set onmessage handler", () => {
+  it("should set message event listener", () => {
     const callback = jest.fn();
     sendMessage("test", callback);
 
-    expect(mockEventSource.onmessage).toBeDefined();
+    expect(mockEventSource.addEventListener).toHaveBeenCalledWith(
+      "message",
+      expect.any(Function)
+    );
   });
 
   it("should call callback with parsed data on message", () => {
@@ -54,11 +60,15 @@ describe("sendMessage", () => {
     const testData = { event: "message", data: "chunk data" };
     const event = {
       data: JSON.stringify(testData),
-    };
+    } as MessageEvent;
 
-    // Simulate message event
-    if (mockEventSource.onmessage) {
-      mockEventSource.onmessage(event as MessageEvent);
+    // Get the message event listener and call it
+    const messageCall = mockEventSource.addEventListener.mock.calls.find(
+      (call) => call[0] === "message"
+    );
+    expect(messageCall).toBeDefined();
+    if (messageCall) {
+      messageCall[1](event);
     }
 
     expect(callback).toHaveBeenCalledWith(testData);
@@ -71,10 +81,15 @@ describe("sendMessage", () => {
     const doneData = { event: "done" };
     const event = {
       data: JSON.stringify(doneData),
-    };
+    } as MessageEvent;
 
-    if (mockEventSource.onmessage) {
-      mockEventSource.onmessage(event as MessageEvent);
+    // Get the message event listener and call it
+    const messageCall = mockEventSource.addEventListener.mock.calls.find(
+      (call) => call[0] === "message"
+    );
+    expect(messageCall).toBeDefined();
+    if (messageCall) {
+      messageCall[1](event);
     }
 
     expect(mockEventSource.close).toHaveBeenCalled();
@@ -87,10 +102,15 @@ describe("sendMessage", () => {
 
     const event = {
       data: "invalid json",
-    };
+    } as MessageEvent;
 
-    if (mockEventSource.onmessage) {
-      mockEventSource.onmessage(event as MessageEvent);
+    // Get the message event listener and call it
+    const messageCall = mockEventSource.addEventListener.mock.calls.find(
+      (call) => call[0] === "message"
+    );
+    expect(messageCall).toBeDefined();
+    if (messageCall) {
+      messageCall[1](event);
     }
 
     expect(consoleSpy).toHaveBeenCalled();
@@ -98,19 +118,31 @@ describe("sendMessage", () => {
     consoleSpy.mockRestore();
   });
 
-  it("should set onerror handler", () => {
+  it("should set error event listener", () => {
     const callback = jest.fn();
     sendMessage("test", callback);
 
-    expect(mockEventSource.onerror).toBeDefined();
+    expect(mockEventSource.addEventListener).toHaveBeenCalledWith(
+      "error",
+      expect.any(Function)
+    );
   });
 
   it("should call callback with error on EventSource error", () => {
     const callback = jest.fn();
-    sendMessage("test", callback);
+    const eventSource = sendMessage("test", callback);
 
-    if (mockEventSource.onerror) {
-      mockEventSource.onerror({} as Event);
+    // The onerror handler checks if readyState === EventSource.CLOSED (which is 2)
+    // We need to set readyState to CLOSED before calling onerror
+    // Use Object.defineProperty to ensure the value is properly set
+    Object.defineProperty(eventSource, "readyState", {
+      value: 2, // EventSource.CLOSED
+      writable: true,
+      configurable: true,
+    });
+
+    if (eventSource.onerror) {
+      eventSource.onerror({} as Event);
     }
 
     expect(callback).toHaveBeenCalledWith({ error: "Connection error" });
@@ -134,12 +166,18 @@ describe("sendMessage", () => {
       { event: "message", data: "chunk3" },
     ];
 
+    // Get the message event listener
+    const messageCall = mockEventSource.addEventListener.mock.calls.find(
+      (call) => call[0] === "message"
+    );
+    expect(messageCall).toBeDefined();
+
     chunks.forEach((chunk) => {
       const event = {
         data: JSON.stringify(chunk),
-      };
-      if (mockEventSource.onmessage) {
-        mockEventSource.onmessage(event as MessageEvent);
+      } as MessageEvent;
+      if (messageCall) {
+        messageCall[1](event);
       }
     });
 

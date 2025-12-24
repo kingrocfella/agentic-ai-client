@@ -43,3 +43,7 @@ global.EventSource = jest.fn().mockImplementation(() => ({
   onerror: null,
   readyState: 1,
 }));
+// Add EventSource constants
+global.EventSource.CONNECTING = 0;
+global.EventSource.OPEN = 1;
+global.EventSource.CLOSED = 2;
