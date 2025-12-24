@@ -231,7 +231,6 @@ describe("GET /api/chat", () => {
       Authorization: "Bearer invalid-token",
     });
 
-    const { clearAuthCookies } = await import("../../../lib/auth");
     const clearCookiesSpy = jest.spyOn(
       await import("../../../lib/auth"),
       "clearAuthCookies"
