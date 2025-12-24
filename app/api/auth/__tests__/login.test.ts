@@ -20,7 +20,7 @@ const originalFetch = global.fetch;
 describe("POST /api/auth/login", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.AGENT_API_BASE_URL = "http://localhost:8000";
+    process.env.AGENT_API_BASE_URL = "http://localhost:9000";
     global.fetch = jest.fn() as jest.Mock;
   });
 

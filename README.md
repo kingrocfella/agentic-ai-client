@@ -47,7 +47,7 @@ npm install
 3. Create a `.env.local` file in the root directory:
 
 ```env
-AGENT_API_BASE_URL=http://localhost:8000
+AGENT_API_BASE_URL=http://localhost:9000
 COOKIE_AGE_DAYS=7
 NODE_ENV=development
 ```
@@ -67,7 +67,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 1. Create a `.env` file in the root directory:
 
 ```env
-AGENT_API_BASE_URL=http://localhost:8000
+AGENT_API_BASE_URL=http://localhost:9000
 COOKIE_AGE_DAYS=7
 NODE_ENV=production
 ```
