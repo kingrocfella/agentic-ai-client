@@ -24,6 +24,7 @@ jest.mock("next/navigation", () => ({
 jest.mock("react-markdown", () => ({
   __esModule: true,
   default: ({ children }) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const React = require("react");
     return React.createElement("div", null, children);
   },
