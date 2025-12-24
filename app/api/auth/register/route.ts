@@ -16,13 +16,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const registerApiUrl = `${process.env.AGENT_API_BASE_URL}/register`;
-    if (!registerApiUrl) {
+    const registerBaseUrl = process.env.AGENT_API_BASE_URL;
+    if (!registerBaseUrl) {
       return NextResponse.json(
         { error: "Register API URL is required" },
         { status: 500 }
       );
     }
+
+    const registerApiUrl = `${registerBaseUrl}/register`;
 
     const response = await fetch(registerApiUrl, {
       method: "POST",

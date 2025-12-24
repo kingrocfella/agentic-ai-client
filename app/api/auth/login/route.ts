@@ -20,13 +20,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const loginApiUrl = `${process.env.AGENT_API_BASE_URL}/login`;
-    if (!loginApiUrl) {
+    const loginBaseUrl = process.env.AGENT_API_BASE_URL;
+    if (!loginBaseUrl) {
       return NextResponse.json(
         { error: "Login API URL is required" },
         { status: 500 }
       );
     }
+
+    const loginApiUrl = `${loginBaseUrl}/login`;
 
     const response = await fetch(loginApiUrl, {
       method: "POST",

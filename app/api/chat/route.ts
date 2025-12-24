@@ -13,14 +13,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Call the streaming agent API
-    const agentApiUrl = `${process.env.AGENT_API_BASE_URL}/agents/chat`;
-    if (!agentApiUrl) {
+    const agentBaseUrl = process.env.AGENT_API_BASE_URL;
+    if (!agentBaseUrl) {
       return NextResponse.json(
         { error: "Agent API URL is not set" },
         { status: 500 }
       );
     }
+
+    // Call the streaming agent API
+    const agentApiUrl = `${agentBaseUrl}/agents/chat`;
 
     const apiUrl = `${agentApiUrl}?agent_type=ollama&query=${encodeURIComponent(
       message

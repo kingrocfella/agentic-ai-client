@@ -20,14 +20,16 @@ export async function GET() {
     // Get authentication headers
     const authHeaders = await getAuthHeaders();
 
-    // Call the external logout API
-    const logoutApiUrl = `${process.env.AGENT_API_BASE_URL}/logout`;
-    if (!logoutApiUrl) {
+    const logoutBaseUrl = process.env.AGENT_API_BASE_URL;
+    if (!logoutBaseUrl) {
       return NextResponse.json(
         { error: "Logout API URL is required" },
         { status: 500 }
       );
     }
+
+    // Call the external logout API
+    const logoutApiUrl = `${logoutBaseUrl}/logout`;
 
     const response = await fetch(logoutApiUrl, {
       method: "GET",
