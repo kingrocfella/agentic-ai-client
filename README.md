@@ -60,6 +60,42 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## Docker Deployment
+
+### Using Docker Compose
+
+1. Create a `.env` file in the root directory:
+
+```env
+AGENT_API_BASE_URL=http://localhost:8000
+COOKIE_AGE_DAYS=7
+NODE_ENV=production
+```
+
+2. Build and run with Docker Compose:
+
+```bash
+docker-compose up -d
+```
+
+The application will be available at [http://localhost:3000](http://localhost:3000).
+
+### Using Docker directly
+
+1. Build the Docker image:
+
+```bash
+docker build -t ai-agent-client .
+```
+
+2. Run the container:
+
+```bash
+docker run -p 3000:3000 --env-file .env ai-agent-client
+```
+
+**Note**: The Dockerfile uses Next.js standalone output mode for optimized production builds.
+
 ## Project Structure
 
 ```
@@ -82,6 +118,8 @@ ai-agent-client/
 │   ├── login/             # Login/Register page
 │   └── page.tsx           # Home page (protected)
 ├── proxy.ts               # Route protection middleware
+├── Dockerfile             # Multi-stage Docker build
+├── docker-compose.yml     # Docker Compose configuration
 └── jest.config.js         # Jest configuration
 ```
 
