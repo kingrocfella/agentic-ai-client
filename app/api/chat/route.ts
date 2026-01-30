@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthHeaders, clearAuthCookies } from "../../lib/auth";
+import { chatQuerySchema } from "../../lib/validations";
+import { validateRequest } from "../../lib/validation-utils";
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const message = searchParams.get("query");
 
-    if (!message || typeof message !== "string") {
-      return NextResponse.json(
-        { error: "User Query is required" },
-        { status: 400 }
-      );
+    // Validate query parameter
+    const validation = validateRequest(chatQuerySchema, { query: message });
+
+    if (!validation.success) {
+      return validation.response;
     }
+
+    const { query } = validation.data;
 
     const agentBaseUrl = process.env.AGENT_API_BASE_URL;
     if (!agentBaseUrl) {
@@ -25,7 +29,7 @@ export async function GET(request: NextRequest) {
     const agentApiUrl = `${agentBaseUrl}/agents/chat`;
 
     const apiUrl = `${agentApiUrl}?agent_type=ollama&query=${encodeURIComponent(
-      message
+      query
     )}`;
 
     // Get authentication headers

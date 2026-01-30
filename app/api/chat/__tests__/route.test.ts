@@ -61,7 +61,8 @@ describe("GET /api/chat", () => {
     const response = await GET(request);
     const data = await response.json();
 
-    expect(data.error).toBe("User Query is required");
+    expect(data.error).toBe("Validation failed");
+    expect(data.details).toBeDefined();
     expect(response.status).toBe(400);
   });
 
@@ -77,7 +78,8 @@ describe("GET /api/chat", () => {
     const response = await GET(request);
     const data = await response.json();
 
-    expect(data.error).toBe("User Query is required");
+    expect(data.error).toBe("Validation failed");
+    expect(data.details).toBeDefined();
     expect(response.status).toBe(400);
   });
 

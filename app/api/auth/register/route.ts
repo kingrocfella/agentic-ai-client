@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-
-interface RegisterResponse {
-  message: string;
-  data: null;
-}
+import { registerSchema, registerResponseSchema } from "../../../lib/validations";
+import { validateRequest, validateResponse } from "../../../lib/validation-utils";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    // Parse and validate request body
+    const body = await request.json();
+    const validation = validateRequest(registerSchema, body);
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 }
-      );
+    if (!validation.success) {
+      return validation.response;
     }
+
+    const { email, password } = validation.data;
 
     const registerBaseUrl = process.env.AGENT_API_BASE_URL;
     if (!registerBaseUrl) {
@@ -44,7 +42,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data: RegisterResponse = await response.json();
+    const responseData = await response.json();
+    
+    // Validate API response
+    const data = validateResponse(
+      registerResponseSchema,
+      responseData,
+      "Register API response"
+    );
 
     return NextResponse.json({
       message: data.message || "User registered successfully",

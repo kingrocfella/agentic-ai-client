@@ -12,6 +12,7 @@ Try out the application with a live demo at the link above.
 
 - **Real-time Chat Interface**: ChatGPT-style chatbox with streaming responses
 - **Authentication**: Secure login, registration, and logout with httpOnly cookies
+- **Data Validation**: Runtime type-safe validation with Zod for all API endpoints
 - **Streaming API**: Server-Sent Events (SSE) for real-time message streaming
 - **Markdown Rendering**: Rich markdown support with syntax highlighting
 - **Auto-logout on 401**: Automatic logout and redirect when authentication expires
@@ -23,6 +24,7 @@ Try out the application with a live demo at the link above.
 
 - **Framework**: Next.js 16.1.1 (App Router)
 - **Language**: TypeScript
+- **Validation**: Zod for runtime type-safe validation
 - **Styling**: Tailwind CSS 4
 - **Markdown**: react-markdown with remark-breaks
 - **Testing**: Jest, React Testing Library, @testing-library/user-event
@@ -136,6 +138,30 @@ ai-agent-client/
 3. **Protected Routes**: Home page requires authentication (handled by `proxy.ts`)
 4. **Auto-logout**: On 401 responses, cookies are cleared and user is redirected to login
 5. **Logout**: Explicit logout clears cookies and calls external logout API
+
+## Data Validation
+
+All API routes use Zod for runtime type-safe validation:
+
+- **Request Validation**: All incoming data is validated against Zod schemas
+- **Response Validation**: External API responses are validated for type safety
+- **Clear Error Messages**: Validation failures return detailed error information
+- **Type Safety**: TypeScript types are automatically inferred from schemas
+
+See [VALIDATION.md](./VALIDATION.md) for detailed documentation on validation implementation.
+
+Example validation error response:
+```json
+{
+  "error": "Validation failed",
+  "details": [
+    {
+      "field": "email",
+      "message": "Invalid email format"
+    }
+  ]
+}
+```
 
 ## Testing
 

@@ -37,7 +37,8 @@ describe("POST /api/auth/login", () => {
     const response = await POST(request);
     const data = await response.json();
 
-    expect(data.error).toBe("Username and password are required");
+    expect(data.error).toBe("Validation failed");
+    expect(data.details).toBeDefined();
     expect(response.status).toBe(400);
   });
 
@@ -49,7 +50,8 @@ describe("POST /api/auth/login", () => {
     const response = await POST(request);
     const data = await response.json();
 
-    expect(data.error).toBe("Username and password are required");
+    expect(data.error).toBe("Validation failed");
+    expect(data.details).toBeDefined();
     expect(response.status).toBe(400);
   });
 

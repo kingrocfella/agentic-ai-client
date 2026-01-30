@@ -1,24 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-
-interface LoginResponse {
-  message: string;
-  data: {
-    access_token: string;
-    token_type: string;
-  };
-}
+import { loginSchema, loginResponseSchema } from "../../../lib/validations";
+import { validateRequest, validateResponse } from "../../../lib/validation-utils";
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json();
+    // Parse and validate request body
+    const body = await request.json();
+    const validation = validateRequest(loginSchema, body);
 
-    if (!username || !password) {
-      return NextResponse.json(
-        { error: "Username and password are required" },
-        { status: 400 }
-      );
+    if (!validation.success) {
+      return validation.response;
     }
+
+    const { username, password } = validation.data;
 
     const loginBaseUrl = process.env.AGENT_API_BASE_URL;
     if (!loginBaseUrl) {
@@ -48,9 +43,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data: LoginResponse = await response.json();
+    const responseData = await response.json();
+    
+    // Validate API response
+    const data = validateResponse(
+      loginResponseSchema,
+      responseData,
+      "Login API response"
+    );
 
-    // Store tokens in httpOnly cookies
+    // Store tokens in httpOnly cookies with enhanced security
     const cookieStore = await cookies();
     if (!cookieStore) {
       return NextResponse.json(
@@ -58,21 +60,23 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-    cookieStore.set("access_token", data.data.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24 * Number(process.env.COOKIE_AGE_DAYS),
-      path: "/",
-    });
 
-    cookieStore.set("token_type", data.data.token_type, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24 * Number(process.env.COOKIE_AGE_DAYS),
+    // Determine secure flag: use env var if set, otherwise default to production check
+    // In production or when FORCE_SECURE_COOKIES is true, always use secure flag
+    const isSecure =
+      process.env.FORCE_SECURE_COOKIES === "true" ||
+      process.env.NODE_ENV === "production";
+
+    const cookieOptions = {
+      httpOnly: true, // Prevents JavaScript access (XSS protection)
+      secure: isSecure, // Only send over HTTPS
+      sameSite: "strict" as const, // CSRF protection
+      maxAge: 60 * 60 * 24 * Number(process.env.COOKIE_AGE_DAYS || 7),
       path: "/",
-    });
+    };
+
+    cookieStore.set("access_token", data.data.access_token, cookieOptions);
+    cookieStore.set("token_type", data.data.token_type, cookieOptions);
 
     return NextResponse.json({
       message: data.message || "Login successful",
