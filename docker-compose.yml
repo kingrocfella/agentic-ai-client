@@ -1,0 +1,48 @@
+# The required, gitignored .env is injected into the container — it is the only
+# environment file in this repository. The published host port binds to
+# 127.0.0.1 so the app is reachable from this machine only, never the LAN; a TLS
+# reverse proxy is what faces the internet. This is the single canonical compose
+# file (no prod/override variants).
+#
+# Only server-side values belong in .env. Anything a browser must see has to be
+# rendered into the page or served from a route — never a NEXT_PUBLIC_ secret.
+x-app-env: &app-env
+  - path: ./.env
+    required: true
+
+services:
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-agent-client
+    container_name: ai-agent-client
+    restart: unless-stopped
+    env_file: *app-env
+    environment:
+      # The agent API runs in its own Compose project. Both join the private
+      # `agentic-ai` network, so this reaches it by service DNS without either
+      # app publishing anything to the LAN.
+      AGENT_API_BASE_URL: ${AGENT_API_BASE_URL:-http://app:9000}
+      NODE_ENV: production
+    read_only: true
+    cap_drop: ['ALL']
+    security_opt: ['no-new-privileges:true']
+    pids_limit: 256
+    tmpfs:
+      # Next.js writes its incremental cache under .next/cache at runtime.
+      - /tmp:size=67108864,mode=1777
+      - /app/.next/cache:size=134217728,mode=0755,uid=1001,gid=1001
+    ports:
+      - '127.0.0.1:${WEB_HOST_PORT:-3000}:3000'
+    networks:
+      - default
+      - agentic-ai
+
+networks:
+  # Created by `make ensure-app-network`, and joined by the agent API's own
+  # compose project. Internal: it carries service-to-service traffic only and
+  # has no route off the host.
+  agentic-ai:
+    name: agentic-ai
+    external: true

@@ -13,14 +13,12 @@ export default function ChatBox() {
   const [isLoading, setIsLoading] = useState(false);
   const [streamedResponse, setStreamedResponse] = useState("");
   const [userMessage, setUserMessage] = useState("");
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const streamRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     // Cleanup on unmount
     return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
+      streamRef.current?.abort();
     };
   }, []);
 
@@ -28,28 +26,26 @@ export default function ChatBox() {
     e.preventDefault();
     const currentMessage = message.trim();
     if (currentMessage && !isLoading) {
-      // Close any existing connection
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
+      // Cancel any in-flight stream
+      streamRef.current?.abort();
 
       setIsLoading(true);
       setStreamedResponse("");
       setUserMessage(currentMessage);
       setMessage("");
 
-      const eventSource = sendMessage(currentMessage, (chunk) => {
+      const controller = sendMessage(currentMessage, (chunk) => {
         if (chunk?.event === "message" && chunk?.data) {
           setStreamedResponse((prev) => prev + chunk.data);
         }
         if (chunk?.event === "done") {
           setIsLoading(false);
-          eventSourceRef.current = null;
+          streamRef.current = null;
         }
         if (chunk?.error) {
           console.error("Error:", chunk.error);
           setIsLoading(false);
-          eventSourceRef.current = null;
+          streamRef.current = null;
 
           // If we get a 401 error, redirect to login
           if (
@@ -61,7 +57,7 @@ export default function ChatBox() {
         }
       });
 
-      eventSourceRef.current = eventSource;
+      streamRef.current = controller;
     }
   };
 

@@ -3,13 +3,27 @@ import { getAuthHeaders, clearAuthCookies } from "../../lib/auth";
 import { chatQuerySchema } from "../../lib/validations";
 import { validateRequest } from "../../lib/validation-utils";
 
-export async function GET(request: NextRequest) {
+/**
+ * Proxy a chat prompt to the agent API and stream the answer back.
+ *
+ * POST, not GET, and the prompt travels in a JSON body: a query string would
+ * put the user's prompt into browser history and into every access log between
+ * here and the model host. The agent API enforces the same thing — it answers
+ * 405 to GET /agents/chat.
+ */
+export async function POST(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const message = searchParams.get("query");
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Request body must be JSON" },
+        { status: 400 }
+      );
+    }
 
-    // Validate query parameter
-    const validation = validateRequest(chatQuerySchema, { query: message });
+    const validation = validateRequest(chatQuerySchema, body);
 
     if (!validation.success) {
       return validation.response;
@@ -28,19 +42,17 @@ export async function GET(request: NextRequest) {
     // Call the streaming agent API
     const agentApiUrl = `${agentBaseUrl}/agents/chat`;
 
-    const apiUrl = `${agentApiUrl}?agent_type=ollama&query=${encodeURIComponent(
-      query
-    )}`;
-
     // Get authentication headers
     const authHeaders = await getAuthHeaders();
 
-    const response = await fetch(apiUrl, {
-      method: "GET",
+    const response = await fetch(agentApiUrl, {
+      method: "POST",
       headers: {
         Accept: "text/event-stream",
+        "Content-Type": "application/json",
         ...authHeaders,
       },
+      body: JSON.stringify({ agent_type: "ollama", query }),
     });
 
     if (!response.ok) {

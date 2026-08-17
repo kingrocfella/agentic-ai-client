@@ -22,20 +22,12 @@ jest.mock("../LoadingSpinner", () => ({
 }));
 
 describe("ChatBox", () => {
-  const mockEventSource = {
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    close: jest.fn(),
-    onmessage: null,
-    onerror: null,
-    readyState: 1,
-  };
+  // sendMessage hands back the AbortController driving the fetch stream.
+  const mockController = { abort: jest.fn() };
+
   beforeEach(() => {
     jest.clearAllMocks();
-    (global.EventSource as unknown as jest.Mock).mockImplementation(
-      () => mockEventSource
-    );
-    (api.sendMessage as jest.Mock).mockReturnValue(mockEventSource);
+    (api.sendMessage as jest.Mock).mockReturnValue(mockController);
   });
 
   afterEach(() => {
@@ -215,7 +207,7 @@ describe("ChatBox", () => {
     });
   });
 
-  describe("EventSource handling", () => {
+  describe("Stream handling", () => {
     it("should handle done event", async () => {
       const user = userEvent.setup();
       render(<ChatBox />);
@@ -258,10 +250,10 @@ describe("ChatBox", () => {
   });
 
   describe("Cleanup", () => {
-    it("should close EventSource on unmount if one exists", async () => {
+    it("should abort an in-flight stream on unmount", async () => {
       const user = userEvent.setup();
-      const testEventSource = { ...mockEventSource, close: jest.fn() };
-      (api.sendMessage as jest.Mock).mockReturnValue(testEventSource);
+      const testController = { abort: jest.fn() };
+      (api.sendMessage as jest.Mock).mockReturnValue(testController);
 
       const { unmount } = render(<ChatBox />);
       const input = screen.getByPlaceholderText("Message...");
@@ -278,7 +270,7 @@ describe("ChatBox", () => {
 
       // The ref is set synchronously when sendMessage is called
       unmount();
-      expect(testEventSource.close).toHaveBeenCalled();
+      expect(testController.abort).toHaveBeenCalled();
     });
   });
 });

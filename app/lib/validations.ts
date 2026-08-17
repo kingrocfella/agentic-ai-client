@@ -26,12 +26,12 @@ export const registerSchema = z.object({
     .max(255, "Password is too long"),
 });
 
-// Chat validation schemas
+// Chat validation schemas.
+// The 4000-character ceiling mirrors the agent API's own bound on
+// AgentChatRequest.query — a longer prompt is rejected upstream anyway, so
+// reject it here rather than spending a request on it.
 export const chatQuerySchema = z.object({
-  query: z
-    .string()
-    .min(1, "Query is required")
-    .max(10000, "Query is too long"),
+  query: z.string().min(1, "Query is required").max(4000, "Query is too long"),
 });
 
 // API response validation schemas

@@ -35,16 +35,12 @@ jest.mock("remark-breaks", () => ({
   default: () => {},
 }));
 
-// Mock EventSource
-global.EventSource = jest.fn().mockImplementation(() => ({
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-  close: jest.fn(),
-  onmessage: null,
-  onerror: null,
-  readyState: 1,
-}));
-// Add EventSource constants
-global.EventSource.CONNECTING = 0;
-global.EventSource.OPEN = 1;
-global.EventSource.CLOSED = 2;
+// jsdom ships neither TextEncoder nor TextDecoder, but the chat stream reader
+// in app/lib/api.ts needs both (every real browser has them). Borrow Node's.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { TextEncoder, TextDecoder } = require("node:util");
+global.TextEncoder = global.TextEncoder || TextEncoder;
+global.TextDecoder = global.TextDecoder || TextDecoder;
+
+// No EventSource mock: the chat stream is a POST + fetch reader, precisely so
+// the prompt never travels in a URL. See app/lib/api.ts.
