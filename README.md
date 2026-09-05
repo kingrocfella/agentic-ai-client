@@ -42,7 +42,7 @@ Try out the application with a live demo at the link above.
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/kingrocfella/agentic-ai-client
+git clone https://github.com/leonfrontier/agentic-ai-client
 cd agentic-ai-client
 ```
 

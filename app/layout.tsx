@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Chat Agent",
-  description: "AI Chat Agent",
+  title: "Leon Frontier: AI Agent",
+  description: "Leon Frontier's tool-using AI assistant lab.",
 };
 
 export default function RootLayout({
